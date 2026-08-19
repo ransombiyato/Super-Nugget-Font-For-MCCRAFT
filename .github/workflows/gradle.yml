@@ -31,7 +31,7 @@ jobs:
         run: |
           MC=$(awk -F '=' '$1 == "minecraft_version" { print $2 }' gradle.properties)
           BUILD=$(awk -F '=' '$1 == "mod_version" { print $2 }' gradle.properties)
-          echo "fabric=build/libs/psi-${MC}-${BUILD}-fabric-${MC}.jar" >> "$GITHUB_OUTPUT"
+          echo "fabric=build/libs/psi-${MC}-${BUILD}.jar" >> "$GITHUB_OUTPUT"
 
       - name: Lint files
         run: |
