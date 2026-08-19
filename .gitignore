@@ -1,0 +1,84 @@
+## Windows
+Thumbs.db
+
+## gradle
+/.gradle
+/build
+
+## ForgeGradle
+/run
+/runs
+
+## eclipse
+/.settings
+/.metadata
+/.classpath
+/.project
+/eclipse
+/bin
+*.launch
+
+## intellij
+/out
+/.idea
+/atlassian-ide-plugin.xml
+/*.ipr
+/*.iws
+/*.iml
+/classes
+
+## Private Stuffs
+/private.properties
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.jks
+*.keystore
+
+## Local helper scripts
+*.bat
+!gradlew.bat
+
+## Local QA / handoff notes
+/test_spells/
+/README_PORT_FABRIC_NEXT_AGENT.md
+/analysis/
+
+## Jars
+*.jar
+!/gradle/wrapper/gradle-wrapper.jar
+!GardenOfGlass.jar
+
+### OSX (adds a lot of garbage)###
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Data Generator cache
+/src/generated/resources/.cache/
+*.pyc

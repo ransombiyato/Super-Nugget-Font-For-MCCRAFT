@@ -1,0 +1,50 @@
+/*
+ * This class is distributed as part of the Psi Mod.
+ * Get the Source Code in GitHub:
+ * https://github.com/Vazkii/Psi
+ *
+ * Psi is Open Source and distributed under the
+ * Psi License: https://psi.vazkii.net/license.php
+ */
+package vazkii.psi.common.network.message;
+
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
+
+import org.jetbrains.annotations.NotNull;
+
+import vazkii.psi.common.Psi;
+import vazkii.psi.common.network.PayloadContext;
+
+/**
+ * This is needed instead of a serverside position set to avoid jittering, especially under lag.
+ */
+public record MessageBlink(double offX, double offY, double offZ) implements CustomPacketPayload {
+
+	public static final Identifier ID = Psi.location("message_blink");
+	public static final CustomPacketPayload.Type<MessageBlink> TYPE = new Type<>(ID);
+
+	public static final StreamCodec<RegistryFriendlyByteBuf, MessageBlink> CODEC = StreamCodec.composite(
+			ByteBufCodecs.DOUBLE, MessageBlink::offX,
+			ByteBufCodecs.DOUBLE, MessageBlink::offY,
+			ByteBufCodecs.DOUBLE, MessageBlink::offZ,
+			MessageBlink::new);
+
+	@Override
+	public @NotNull Type<? extends CustomPacketPayload> type() {
+		return TYPE;
+	}
+
+	public void handle(PayloadContext ctx) {
+		ctx.enqueueWork(() -> {
+			Entity entity = Psi.proxy.getClientPlayer();
+			if(entity != null) {
+				entity.setPos(entity.getX() + offX, entity.getY() + offY, entity.getZ() + offZ);
+			}
+		});
+	}
+}

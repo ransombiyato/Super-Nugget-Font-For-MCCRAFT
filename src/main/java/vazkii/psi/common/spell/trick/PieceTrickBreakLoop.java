@@ -1,0 +1,66 @@
+/*
+ * This class is distributed as part of the Psi Mod.
+ * Get the Source Code in GitHub:
+ * https://github.com/Vazkii/Psi
+ *
+ * Psi is Open Source and distributed under the
+ * Psi License: https://psi.vazkii.net/license.php
+ */
+package vazkii.psi.common.spell.trick;
+
+import net.minecraft.world.entity.Entity;
+
+import vazkii.psi.api.PsiAPI;
+import vazkii.psi.api.cad.ISocketable;
+import vazkii.psi.api.spell.*;
+import vazkii.psi.api.spell.param.ParamNumber;
+import vazkii.psi.api.spell.piece.PieceTrick;
+import vazkii.psi.common.core.handler.PlayerDataHandler;
+import vazkii.psi.common.entity.EntitySpellCircle;
+
+public class PieceTrickBreakLoop extends PieceTrick {
+
+	SpellParam<Number> valueParam;
+
+	public PieceTrickBreakLoop(Spell spell) {
+		super(spell);
+	}
+
+	@Override
+	public void initParams() {
+		addParam(valueParam = new ParamNumber(SpellParam.GENERIC_NAME_NUMBER, SpellParam.BLUE, false, false));
+	}
+
+	@Override
+	public void addToMetadata(SpellMetadata meta) {
+		// NO-OP
+	}
+
+	@Override
+	public Object execute(SpellContext context) throws SpellRuntimeException {
+		double value = this.getParamValue(context, valueParam).doubleValue();
+
+		if(Math.abs(value) < 1.0) {
+			if(context.focalPoint != context.caster) {
+				if(context.focalPoint instanceof EntitySpellCircle circle) {
+					circle.setTimeAlive(Integer.MAX_VALUE);
+				} else {
+					context.focalPoint.remove(Entity.RemovalReason.DISCARDED);
+				}
+			} else {
+				if(!context.tool.isEmpty()) {
+					ISocketable socketableCap = PsiAPI.getItemCapability(context.tool, PsiAPI.SOCKETABLE_CAPABILITY);
+
+					if(socketableCap != null) {
+						socketableCap.setSelectedSlot(socketableCap.getLastSlot() + 1);
+
+					}
+				}
+
+				PlayerDataHandler.PlayerData data = PlayerDataHandler.get(context.caster);
+				data.stopLoopcast();
+			}
+		}
+		return null;
+	}
+}

@@ -1,0 +1,153 @@
+plugins {
+    id 'fabric-loom' version '1.14.10'
+    id 'java-library'
+    id 'eclipse'
+    id 'idea'
+    id 'maven-publish'
+    id 'pmd'
+    id 'com.diffplug.spotless' version '7.2.1'
+}
+
+version = "${minecraft_version}-${mod_version}"
+group = mod_group_id
+
+base {
+    archivesName = mod_id
+}
+
+repositories {
+    mavenLocal()
+    maven {
+        name = "BlameJared"
+        url = "https://maven.blamejared.com/"
+        content {
+            includeGroup "vazkii.patchouli"
+            includeGroup "mezz.jei"
+        }
+    }
+}
+
+loom {
+    mods {
+        psi {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+sourceSets.main.resources.srcDir 'src/generated/resources'
+
+sourceSets.main.java {
+    exclude 'vazkii/psi/mixin/client/HumanoidArmorLayerMixin.java'
+    // JEI is optional. Exclude its integration until an exact 1.21.11 API is selected.
+    exclude 'vazkii/psi/client/jei/**'
+    // These 1.21.1 immediate-mode client renderers require a separate submit-node/ItemModel rewrite.
+    exclude 'vazkii/psi/client/model/ModelCAD.java'
+    exclude 'vazkii/psi/client/gui/**'
+    exclude 'vazkii/psi/client/model/**'
+    exclude 'vazkii/psi/client/render/spell/**'
+    exclude 'vazkii/psi/client/patchouli/**'
+    exclude 'vazkii/psi/client/render/entity/**'
+    exclude 'vazkii/psi/client/render/tile/**'
+    exclude 'vazkii/psi/client/core/handler/BookSoundHandler.java'
+    exclude 'vazkii/psi/client/core/helper/SharingHelper.java'
+    exclude 'vazkii/psi/common/crafting/recipe/BulletUpgradeRecipe.java'
+    exclude 'vazkii/psi/data/**'
+    exclude 'vazkii/psi/mixin/client/ParticleEngineMixin.java'
+    exclude 'vazkii/psi/mixin/server/ServerPlaceRecipeMixin.java'
+    exclude 'vazkii/psi/client/core/handler/ShaderHandler.java'
+}
+
+spotless {
+    java {
+        target project.fileTree(dir: 'src/main/java/vazkii/psi', include: '**/*.java')
+        eclipse().configFile 'spotless/eclipseformat.xml'
+        removeUnusedImports()
+        importOrderFile 'spotless/eclipse.importorder'
+        replaceRegex 'Too much space after if', '(if|for|while|switch) +\\(', '$1('
+    }
+}
+
+pmd {
+    ruleSetFiles = files("spotless/pmd-ruleset.xml")
+}
+
+tasks.register('checkSyntax') {
+    dependsOn spotlessJavaCheck, pmdMain
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
+
+    compileOnly "org.jetbrains:annotations:${jetbrains_annotations_version}"
+    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
+
+    modImplementation "vazkii.patchouli:Patchouli:${patchouli_version}-FABRIC"
+}
+
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version       : minecraft_version,
+            minecraft_version_range : minecraft_version_range,
+            fabric_loader_version   : fabric_loader_version,
+            fabric_api_version      : fabric_api_version,
+            patchouli_version       : patchouli_version,
+            mod_id                  : mod_id,
+            mod_name                : mod_name,
+            mod_license             : mod_license,
+            mod_version             : version,
+            mod_authors             : mod_authors,
+            mod_description         : mod_description
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['fabric.mod.json']) {
+        expand replaceProperties
+    }
+
+    from(sourceSets.main.resources.srcDirs) {
+        exclude '**/psd/**'
+        duplicatesStrategy 'include'
+    }
+}
+
+jar {
+    archiveFileName = "${mod_name}-${version}.jar"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}
+
+idea {
+    module {
+        downloadSources = true
+        downloadJavadoc = true
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId project.group
+            artifactId base.archivesName.get()
+            version project.version
+            from components.java
+        }
+    }
+
+    repositories {
+        maven {
+            url "file://" + System.getenv("local_maven")
+        }
+    }
+}
